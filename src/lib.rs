@@ -7,6 +7,7 @@
 //! Make a trait cloneable by attaching the attribute #[dyn_cloneable]. This will generate a new supertrait that contains a function `fn clone_dyn(&self) -> Box<dyn #trait_ident>`
 //! Here an Example:
 //! ```
+//! use cloneable_dyn::dyn_cloneable;
 //! #[dyn_cloneable]
 //! trait TestTrait {}
 //!
@@ -19,12 +20,12 @@
 //!
 
 use proc_macro::TokenStream;
-use syn::{self, parse::Parser, punctuated::Punctuated, token::Comma, Ident, Item};
+use syn::Item;
 mod clone_dyn_derive;
 mod dyn_cloneable;
 use dyn_cloneable::make_clonable;
+mod dyn_cloneable_for_traits;
 mod utils;
-use quote::{format_ident, quote};
 
 #[proc_macro_derive(CloneDyn)]
 pub fn clone_dyn_derive(input: TokenStream) -> TokenStream {
@@ -39,27 +40,9 @@ pub fn dyn_cloneable(_attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn dyn_clonable_for_traits(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let parser = Punctuated::<Ident, Comma>::parse_terminated;
-    let args = parser.parse(attr).expect("wasn't able to parse attrs");
-    let item: Item = syn::parse(item).expect("wasn't able to parse Item");
-    let item_ident: &Ident = match &item {
-        Item::Enum(i) => &i.ident,
-        Item::Struct(i) => &i.ident,
-        _ => panic!("item must be Enum or struct"),
-    };
-    let mut impls = quote!();
-    for arg in args {
-        let trait_ident = format_ident!("{}DynCloneAutoDerive", arg);
-        impls = quote!(
-            impl #trait_ident for #item_ident {
-                fn clone_dyn(&self) -> Box<dyn #arg> {
-                    Box::new(self.clone())
-                }
-            }
+pub fn dyn_cloneable_for_traits(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let args = dyn_cloneable_for_traits::parse_args(attr.into());
+    let item: Item = dyn_cloneable_for_traits::parse(item.into());
 
-            #impls
-        )
-    }
-    quote!(#item #impls).into()
+    dyn_cloneable_for_traits::impl_trait_clone_traits(args, item).into()
 }
