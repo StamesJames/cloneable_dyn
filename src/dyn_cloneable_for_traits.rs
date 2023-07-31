@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::{parse::Parser, punctuated::Punctuated, token::Comma, Ident, Item};
 
 use crate::utils::make_trait_ident_for_trait;
