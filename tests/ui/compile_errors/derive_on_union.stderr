@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> tests/ui/compile_errors/derive_on_union.rs:3:10
+  |
+3 | #[derive(CloneDyn)]
+  |          ^^^^^^^^
+  |
+  = help: message: Unions are not supported
